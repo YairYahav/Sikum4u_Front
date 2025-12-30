@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate  } from 'react-router-dom';
 import { authAPI } from './services/authApi';
+
+import Header from './components/Header/Header';
 
 // Import Pages
 import Home from './pages/Home';
 import Course from './pages/Course';
+import Courses from './pages/Courses';
 import Folder from './pages/Folder';
 import FilePage from './pages/File';
 import User from './pages/User';
@@ -12,6 +15,8 @@ import ContactUs from './pages/ContactUs';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import NotFound from './pages/NotFound';
+
+import { AuthApi, PhotosApi, AlbumsApi, UserApi } from './services/index.js'
 
 // Admin Pages
 import AdminPanel from './pages/AdminPanel';
@@ -54,114 +59,34 @@ function App() {
   const isAuthenticated = !!user;
   const isAdmin = user?.role === 'admin';
 
-  return (
-    <Router>
-      <div className="app-wrapper">
-        <nav className="navbar" style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          padding: '1rem 5%', 
-          backgroundColor: 'var(--nav-bg)',
-          borderBottom: '1px solid var(--border-color)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 1000
-        }}>
-          <div className="nav-right" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-            <Link to="/" style={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'var(--primary-color)' }}>Sikum4U</Link>
-            <Link to="/">דף הבית</Link>
-            <Link to="/contact">צור קשר</Link>
-          </div>
+return (
+    <div className="app-container">
+      <Header /> {/* התפריט העליון שתכף נסדר */}
+      
+      <main className="main-content">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          {/* התיקון לשגיאת 404: הוספת הנתיב הזה */}
+          <Route path="/courses" element={<Courses />} />
+          
+          <Route path="/course/:id" element={<Course />} />
+          <Route path="/user" element={<ProtectedRoute><User /></ProtectedRoute>} />
+          
+          {/* נתיב לאדמין */}
+          <Route path="/admin" element={
+            <ProtectedRoute adminOnly={true}>
+              <AdminPanel />
+            </ProtectedRoute>
+          } />
 
-          <div className="nav-left" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            {isAdmin && <Link to="/admin" style={{ color: 'var(--primary-color)', fontWeight: '600' }}>פאנל ניהול</Link>}
-            
-            {isAuthenticated ? (
-              <>
-                <Link to="/user">שלום, {user.name}</Link>
-                <button onClick={handleLogout} style={{ padding: '5px 12px', fontSize: '0.9rem' }}>התנתק</button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">התחברות</Link>
-                <Link to="/register" style={{ 
-                  backgroundColor: 'var(--primary-color)', 
-                  color: 'white', 
-                  padding: '8px 16px', 
-                  borderRadius: '8px' 
-                }}>הרשמה</Link>
-              </>
-            )}
-          </div>
-        </nav>
-
-        <main className="container" style={{ padding: '2rem 0' }}>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/course/:id" element={<Course />} />
-            <Route path="/folder/:id" element={<Folder />} />
-            <Route path="/file/:id" element={<FilePage />} />
-            <Route path="/contact" element={<ContactUs />} />
-
-            {/* Auth Routes (רק אם לא מחובר) */}
-            <Route path="/login" element={
-              <ProtectedRoute isAuthenticated={isAuthenticated}>
-                <Login />
-              </ProtectedRoute>
-            } />
-            <Route path="/register" element={
-              <ProtectedRoute isAuthenticated={isAuthenticated}>
-                <Register />
-              </ProtectedRoute>
-            } />
-
-            {/* User Routes (רק אם מחובר) */}
-            <Route path="/user" element={
-              <ProtectedRoute isAuthenticated={isAuthenticated} requiredRole="user">
-                <User />
-              </ProtectedRoute>
-            } />
-
-            {/* Admin Routes (רק אם אדמין) */}
-            <Route path="/admin" element={
-              <ProtectedRoute isAuthenticated={isAuthenticated} userRole={user?.role} requiredRole="admin">
-                <AdminPanel />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/add-course" element={
-              <ProtectedRoute isAuthenticated={isAuthenticated} userRole={user?.role} requiredRole="admin">
-                <AddCourse />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/add-folder" element={
-              <ProtectedRoute isAuthenticated={isAuthenticated} userRole={user?.role} requiredRole="admin">
-                <AddFolder />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/add-file" element={
-              <ProtectedRoute isAuthenticated={isAuthenticated} userRole={user?.role} requiredRole="admin">
-                <AddFile />
-              </ProtectedRoute>
-            } />
-
-            {/* 404 Route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
-
-        <footer style={{ 
-          textAlign: 'center', 
-          padding: '2rem', 
-          borderTop: '1px solid var(--border-color)',
-          marginTop: '3rem',
-          opacity: 0.7
-        }}>
-          <p>© {new Date().getFullYear()} Sikum4U - כל הסיכומים במקום אחד</p>
-        </footer>
-      </div>
-    </Router>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+    </div>
   );
-}
+};
 
 export default App;

@@ -35,12 +35,13 @@ function App() {
       if (token) {
         try {
           const res = await authAPI.getMe();
-          // התיקון: בדיקה אם המידע עטוף ב-data או מגיע ישירות
-          // אם יש res.data, נשתמש בו. אם לא, נשתמש ב-res עצמו.
-          const userData = res.data || res; 
-          setUser(userData); 
+          
+          const validUser = res.data || res.user || res;
+          
+          console.log("App.jsx - User Loaded:", validUser);
+          setUser(validUser); 
         } catch (err) {
-          console.error("Session expired or invalid");
+          console.error("Session expired", err);
           localStorage.removeItem('token');
         }
       }

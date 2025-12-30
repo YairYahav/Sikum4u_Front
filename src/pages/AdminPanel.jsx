@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../services/api';
-import './AdminPanel.css'; 
+import '../index.css'; 
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('course'); // course, folder, file, link

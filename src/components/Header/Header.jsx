@@ -7,13 +7,11 @@ export default function Header({ user, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // --- התיקון מתחיל כאן ---
-  // אנחנו מוודאים שאנחנו ניגשים לאובייקט המשתמש האמיתי, גם אם הוא עטוף ב-data
+  // נרמול נתוני המשתמש
   const userData = user?.data || user; 
   
   const isAuthenticated = !!userData;
   const isAdmin = userData?.role === 'admin';
-  // --- סוף התיקון ---
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -23,9 +21,6 @@ export default function Header({ user, onLogout }) {
   };
 
   const isActive = (path) => location.pathname === path ? "text-indigo-600 bg-indigo-50" : "text-gray-600 hover:text-indigo-600 hover:bg-gray-50";
-
-  // מעכשיו בקוד למטה, תשתמש ב-userData במקום ב-user
-  // לדוגמה: userData.firstName, userData.profilePicture וכו'.
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
@@ -47,18 +42,24 @@ export default function Header({ user, onLogout }) {
             
             {isAuthenticated && (
                 <Link to="/favorites" className={`group px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${isActive('/favorites')}`}>
-                    <Heart size={16} className="transition-colors group-hover:text-red-500 group-hover:fill-red-500" />
+                    {/* התיקון כאן: בדיקה אם אנחנו בעמוד המועדפים */}
+                    <Heart 
+                        size={16} 
+                        className={`transition-colors ${
+                            location.pathname === '/favorites' 
+                                ? "text-red-500 fill-red-500" // אם אנחנו בעמוד - אדום קבוע
+                                : "group-hover:text-red-500 group-hover:fill-red-500" // אחרת - אדום רק בהובר
+                        }`} 
+                    />
                     מועדפים
                 </Link>
             )}
 
             <Link to="/contact" className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${isActive('/contact')}`}>צור קשר</Link>
-
           </nav>
 
           {/* User / Auth Actions */}
           <div className="hidden md:flex items-center gap-4">
-            {/* כפתור אדמין */}
             {isAdmin && (
               <Link to="/admin" className="flex items-center gap-1 text-indigo-600 font-semibold bg-indigo-50 px-3 py-1 rounded-full text-sm border border-indigo-100 hover:bg-indigo-100 transition-colors">
                 <Shield size={14} /> פאנל ניהול
@@ -71,7 +72,6 @@ export default function Header({ user, onLogout }) {
                 
                 <Link to="/user" className="group relative" title="הפרופיל שלי">
                   <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold shadow-md transform transition-transform group-hover:scale-105 overflow-hidden">
-                    {/* שימוש ב-userData */}
                     {userData.profilePicture ? (
                         <img src={userData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
@@ -94,8 +94,8 @@ export default function Header({ user, onLogout }) {
             )}
           </div>
           
-          {/* Mobile Menu Button & Content... (אותו קוד כמו קודם, רק תזכור להשתמש ב-userData במקום user) */}
-           <div className="md:hidden flex items-center">
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center">
             <button onClick={toggleMenu} className="text-gray-600 p-2">
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -116,6 +116,7 @@ export default function Header({ user, onLogout }) {
             )}
 
             {isAuthenticated && <Link to="/favorites" className="block text-indigo-600 font-medium py-2">מועדפים</Link>}
+            <Link to="/contact" className="block text-gray-700 py-2">צור קשר</Link>
             
             <div className="border-t pt-3 mt-2">
                 {isAuthenticated ? (

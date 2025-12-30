@@ -2,19 +2,19 @@ import React, { useState, useEffect } from 'react';
 import ReadOnlyField from './ReadOnlyField';
 import EditableField from './EditableField';
 import { userAPI } from '../../services/userApi';
+import { Pencil, X, Check, Save } from 'lucide-react'; // וודא שהתקנת את lucide-react
 
 const PersonalInformationSection = ({ user, onUserUpdate, setMessage }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
     const [loading, setLoading] = useState(false);
 
-    // עדכון הטופס כשהמשתמש משתנה
     useEffect(() => {
         if (user) {
             setFormData({
-                firstName: user.firstName,
-                lastName: user.lastName,
-                username: user.username
+                firstName: user.firstName || '',
+                lastName: user.lastName || '',
+                username: user.username || ''
             });
         }
     }, [user]);
@@ -25,7 +25,7 @@ const PersonalInformationSection = ({ user, onUserUpdate, setMessage }) => {
 
     const handleSave = async () => {
         setLoading(true);
-        setMessage(null);
+        if (setMessage) setMessage(null);
         
         try {
             const promises = [];
@@ -36,55 +36,83 @@ const PersonalInformationSection = ({ user, onUserUpdate, setMessage }) => {
 
             if (promises.length > 0) {
                 await Promise.all(promises);
-                setMessage({ type: 'success', text: 'הפרטים עודכנו בהצלחה!' });
-                onUserUpdate(); // רענון המידע למעלה
+                if (setMessage) setMessage({ type: 'success', text: 'הפרטים עודכנו בהצלחה!' });
+                onUserUpdate(); 
+                setIsEditing(false);
+            } else {
+                setIsEditing(false); // לא היו שינויים
             }
-            setIsEditing(false);
         } catch (err) {
-            setMessage({ type: 'danger', text: err.response?.data?.error || 'שגיאה בעדכון פרטים' });
+            const errorMsg = err.response?.data?.error || err.message || 'שגיאה בעדכון פרטים';
+            if (setMessage) setMessage({ type: 'danger', text: errorMsg });
         } finally {
             setLoading(false);
         }
     };
 
+    const handleCancel = () => {
+        setIsEditing(false);
+        // שחזור הנתונים המקוריים
+        setFormData({
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+            username: user.username || ''
+        });
+    };
+
     return (
-        <div className="card mb-4 shadow-sm">
-            <div className="card-header bg-white d-flex justify-content-between align-items-center">
-                <h5 className="mb-0 text-primary">פרטים אישיים</h5>
-                <button 
-                    className={`btn btn-sm ${isEditing ? 'btn-outline-danger' : 'btn-outline-primary'}`}
-                    onClick={() => {
-                        setIsEditing(!isEditing);
-                        // איפוס הטופס בביטול
-                        if (isEditing) setFormData({
-                            firstName: user.firstName,
-                            lastName: user.lastName,
-                            username: user.username
-                        });
-                    }}
-                >
-                    {isEditing ? 'ביטול עריכה' : 'עריכת פרטים'}
-                </button>
-            </div>
-            <div className="card-body">
+        <div className="relative">
+            {/* כפתור עריכה / ביטול - ממוקם בפינה */}
+            <div className="absolute top-0 left-0 pl-4 pt-2">
                 {!isEditing ? (
-                    <>
+                    <button 
+                        onClick={() => setIsEditing(true)}
+                        className="flex items-center gap-1 text-gray-400 hover:text-indigo-600 transition-colors px-3 py-1 rounded-full hover:bg-indigo-50 font-medium text-sm"
+                    >
+                        <Pencil size={14} /> ערוך פרטים
+                    </button>
+                ) : (
+                    <button 
+                        onClick={handleCancel}
+                        className="flex items-center gap-1 text-gray-400 hover:text-red-500 transition-colors px-3 py-1 rounded-full hover:bg-red-50 font-medium text-sm"
+                    >
+                        <X size={16} /> ביטול
+                    </button>
+                )}
+            </div>
+
+            {/* תוכן הטופס */}
+            <div className="pt-8 px-2">
+                {!isEditing ? (
+                    <div className="space-y-1">
                         <ReadOnlyField label="שם פרטי" value={user?.firstName} />
                         <ReadOnlyField label="שם משפחה" value={user?.lastName} />
                         <ReadOnlyField label="שם משתמש" value={user?.username} />
                         <ReadOnlyField label="אימייל" value={user?.email} />
-                    </>
+                    </div>
                 ) : (
-                    <>
+                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                         <EditableField label="שם פרטי" name="firstName" value={formData.firstName} onChange={handleChange} />
                         <EditableField label="שם משפחה" name="lastName" value={formData.lastName} onChange={handleChange} />
                         <EditableField label="שם משתמש" name="username" value={formData.username} onChange={handleChange} />
-                        <div className="d-flex justify-content-end mt-3">
-                            <button className="btn btn-success" onClick={handleSave} disabled={loading}>
-                                {loading ? 'שומר...' : 'שמור שינויים'}
+                        
+                        {/* כפתור שמירה בולט */}
+                        <div className="mt-6 flex justify-end">
+                            <button 
+                                onClick={handleSave} 
+                                disabled={loading}
+                                className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {loading ? (
+                                    'שמור'
+                                ) : (
+                                    <>
+                                        <Save size={18} /> שמור שינויים
+                                    </>
+                                )}
                             </button>
                         </div>
-                    </>
+                    </div>
                 )}
             </div>
         </div>

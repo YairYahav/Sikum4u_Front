@@ -5,7 +5,6 @@ const api = axios.create({
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
     }
 });
 
@@ -28,14 +27,13 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
-            console.warn('Unauthorized access, logging out...');
-            localStorage.removeItem('token');
-            // כאן אפשר להוסיף הפניה לעמוד התחברות
+            if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            }
         }
         
-        // שליחת השגיאה להמשך טיפול בקומפוננטה
-        const errorMessage = error.response?.data?.message || 'שגיאת שרת כללית';
-        return Promise.reject(errorMessage);
+        return Promise.reject(error);
     }
 );
 

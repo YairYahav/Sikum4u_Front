@@ -1,39 +1,33 @@
 import api from './api';
 
 export const authAPI = {
-    // הרשמה של משתמש חדש
-    register: async (userData) => {
-        const response = await api.post('/auth/register', userData);
-        if (response.data.success && response.data.token) {
-            localStorage.setItem('token', response.data.token);
-        }
-        return response.data;
-    },
+  // הרשמה
+  register: async (userData) => {
+    const response = await api.post('/auth/register', userData);
+    return response.data; // מחזירים ישירות את המידע (data)
+  },
 
-    // התחברות משתמש קיים
-    login: async (credentials) => {
-        const response = await api.post('/auth/login', credentials);
-        if (response.data.success && response.data.token) {
-            localStorage.setItem('token', response.data.token);
-        }
-        return response.data;
-    },
+  // התחברות
+  login: async (email, password) => {
+    const response = await api.post('/auth/login', { email, password });
+    return response.data; // מחזירים ישירות את המידע
+  },
 
-    // קבלת פרטי המשתמש המחובר 
-    getMe: async () => {
-        const response = await api.get('/auth/me');
-        return response.data;
-    },
+  // קבלת פרטי משתמש מחובר
+  getMe: async () => {
+    const response = await api.get('/auth/check');
+    return response.data;
+  },
+  
+  // התנתקות
+  logout: () => {
+    localStorage.removeItem('token');
+  },
 
-    // התנתקות
-    logout: () => {
-        localStorage.removeItem('token');
-    },
-
-    // פונקציית עזר לבדיקה מהירה אם יש Token
-    isAuthenticated: () => {
-        return !!localStorage.getItem('token');
-    }
+  // פונקציית עזר לבדיקה מהירה אם יש Token
+  isAuthenticated: () => {
+    return !!localStorage.getItem('token');
+  }
 };
 
 export const userAPI = {

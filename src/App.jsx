@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate  } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { authAPI } from './services/authApi';
-
-import Header from './components/Header/Header';
 
 // Import Pages
 import Home from './pages/Home';
+import Courses from './pages/Courses'; 
+import Favorites from './pages/Favorites'; 
 import Course from './pages/Course';
-import Courses from './pages/Courses';
 import Folder from './pages/Folder';
 import FilePage from './pages/File';
 import User from './pages/User';
@@ -15,8 +14,6 @@ import ContactUs from './pages/ContactUs';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import NotFound from './pages/NotFound';
-
-import { AuthApi, PhotosApi, AlbumsApi, UserApi } from './services/index.js'
 
 // Admin Pages
 import AdminPanel from './pages/AdminPanel';
@@ -26,18 +23,22 @@ import AddFile from './pages/admin/addfile';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
+import Header from './components/Header/Header'; // וודא שזה הנתיב הנכון לקובץ Header שיצרת
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // בדיקת סטטוס משתמש בטעינת האתר
   useEffect(() => {
     const checkAuth = async () => {
-      if (localStorage.getItem('token')) {
+      const token = localStorage.getItem('token');
+      if (token) {
         try {
           const res = await authAPI.getMe();
-          setUser(res.data);
+          // התיקון: בדיקה אם המידע עטוף ב-data או מגיע ישירות
+          // אם יש res.data, נשתמש בו. אם לא, נשתמש ב-res עצמו.
+          const userData = res.data || res; 
+          setUser(userData); 
         } catch (err) {
           console.error("Session expired or invalid");
           localStorage.removeItem('token');
@@ -54,39 +55,91 @@ function App() {
     window.location.href = '/';
   };
 
-  if (loading) return <div className="flex-center" style={{ minHeight: '100vh' }}>טוען מערכת...</div>;
-
-  const isAuthenticated = !!user;
-  const isAdmin = user?.role === 'admin';
-
-return (
-    <div className="app-container">
-      <Header /> {/* התפריט העליון שתכף נסדר */}
-      
-      <main className="main-content">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* התיקון לשגיאת 404: הוספת הנתיב הזה */}
-          <Route path="/courses" element={<Courses />} />
-          
-          <Route path="/course/:id" element={<Course />} />
-          <Route path="/user" element={<ProtectedRoute><User /></ProtectedRoute>} />
-          
-          {/* נתיב לאדמין */}
-          <Route path="/admin" element={
-            <ProtectedRoute adminOnly={true}>
-              <AdminPanel />
-            </ProtectedRoute>
-          } />
-
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 text-indigo-600 font-medium">
+      טוען מערכת...
     </div>
   );
-};
+
+  const isAuthenticated = !!user;
+
+  return (
+    <Router>
+      <div className="flex flex-col min-h-screen bg-gray-50">
+        
+        {/* שימוש ברכיב Header החדש */}
+        <Header user={user} onLogout={handleLogout} />
+
+        <main className="flex-grow container mx-auto px-4 py-8">
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/course/:id" element={<Course />} />
+            <Route path="/folder/:id" element={<Folder />} />
+            <Route path="/file/:id" element={<FilePage />} />
+            <Route path="/contact" element={<ContactUs />} />
+
+            {/* Auth Routes */}
+            <Route path="/login" element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} redirectPath="/">
+                <Login />
+              </ProtectedRoute>
+            } />
+            <Route path="/register" element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} redirectPath="/">
+                <Register />
+              </ProtectedRoute>
+            } />
+
+            {/* User Routes */}
+            <Route path="/user" element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} requiredRole="user">
+                <User />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/favorites" element={
+              <ProtectedRoute isAuthenticated={isAuthenticated}>
+                <Favorites />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} userRole={user?.role} requiredRole="admin">
+                <AdminPanel />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/add-course" element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} userRole={user?.role} requiredRole="admin">
+                <AddCourse />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/add-folder" element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} userRole={user?.role} requiredRole="admin">
+                <AddFolder />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/add-file" element={
+              <ProtectedRoute isAuthenticated={isAuthenticated} userRole={user?.role} requiredRole="admin">
+                <AddFile />
+              </ProtectedRoute>
+            } />
+
+            {/* 404 Route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+
+        <footer className="bg-white border-t border-gray-200 mt-12 py-8">
+          <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
+            <p>© {new Date().getFullYear()} Sikum4U - כל הסיכומים במקום אחד</p>
+          </div>
+        </footer>
+      </div>
+    </Router>
+  );
+}
 
 export default App;

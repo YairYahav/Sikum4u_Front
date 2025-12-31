@@ -17,9 +17,9 @@ import NotFound from './pages/NotFound';
 
 // Admin Pages
 import AdminPanel from './pages/AdminPanel';
-import AddCourse from './pages/admin/addcourse';
-import AddFolder from './pages/admin/addfolder';
-import AddFile from './pages/admin/addfile';
+import AddCourse from './pages/admin/AddCourse';
+import AddFolder from './pages/admin/AddFolder';
+import AddFile from './pages/admin/AddFile';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';

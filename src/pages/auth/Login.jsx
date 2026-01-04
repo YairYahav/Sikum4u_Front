@@ -44,12 +44,28 @@ export default function Login() {
                 <form onSubmit={handleSubmit} className="space-y-4 text-right">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">אימייל</label>
-                        <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none text-left" dir="ltr" />
-                    </div>
+                        <input 
+                            type="email" 
+                            name="email"
+                            autoComplete="email"
+                            required 
+                            value={email} 
+                            onChange={(e) => setEmail(e.target.value)} 
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none text-left" 
+                            dir="ltr" 
+                        />                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">סיסמה</label>
-                        <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none text-left" dir="ltr" />
-                    </div>
+                        <input 
+                            type="password" 
+                            name="password"
+                            autoComplete="current-password"
+                            required 
+                            value={password} 
+                            onChange={(e) => setPassword(e.target.value)} 
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none text-left" 
+                            dir="ltr" 
+                        />                    </div>
                     <button type="submit" disabled={isLoading} className="w-full py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all">
                         {isLoading ? 'מתחבר...' : 'התחבר'}
                     </button>

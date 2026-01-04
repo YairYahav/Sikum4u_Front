@@ -1,12 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { BookOpen, Star, ArrowLeft, Heart } from 'lucide-react';
 
 const CourseCard = ({ course, isFavorite, onToggleFavorite }) => {
+    // מציג כותרת, ואם אין אז ברירת מחדל
+    const displayName = course.title || "קורס ללא שם";
+
     return (
         <div className="bg-white rounded-xl shadow-md border border-gray-100 p-5 flex flex-col justify-between hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 h-full relative group">
             
-            {/* כפתור מועדפים (לב) */}
             {onToggleFavorite && (
                 <button 
                     onClick={(e) => {
@@ -35,14 +36,20 @@ const CourseCard = ({ course, isFavorite, onToggleFavorite }) => {
                         </div>
                     )}
                 </div>
-                <h3 className="font-bold text-lg text-gray-800 line-clamp-1 mb-1">{course.name}</h3>
-                <p className="text-gray-500 text-sm line-clamp-2 min-h-[2.5rem]">{course.description || "אין תיאור לקורס זה"}</p>
+                
+                {/* כותרת הקורס */}
+                <h3 className="font-bold text-lg text-gray-800 line-clamp-1 mb-1">{displayName}</h3>
+                
+                {/* תיאור הקורס (זה שערכנו ב-Sidebar תחת "תיאור קצר") */}
+                <p className="text-gray-500 text-sm line-clamp-2 min-h-[2.5rem]">
+                    {course.description || "אין תיאור לקורס זה"}
+                </p>
             </div>
             
             <div className="mt-4 pt-3 border-t border-gray-50">
-                <Link to={`/course/${course._id}`} className="flex items-center justify-end text-indigo-600 font-medium text-sm hover:text-indigo-800 transition-colors group-hover:translate-x-[-4px]">
+                <div className="flex items-center justify-end text-indigo-600 font-medium text-sm group-hover:translate-x-[-4px] transition-transform">
                     צפה בסיכומים <ArrowLeft size={16} className="mr-1" />
-                </Link>
+                </div>
             </div>
         </div>
     );

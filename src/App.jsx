@@ -68,17 +68,18 @@ function App() {
     <Router>
       <div className="flex flex-col min-h-screen bg-gray-50">
         
-        {/* שימוש ברכיב Header החדש */}
         <Header user={user} onLogout={handleLogout} />
 
         <main className="flex-grow container mx-auto px-4 py-8">
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
-            <Route path="/courses" element={<Courses />} />
-            <Route path="/course/:id" element={<Course />} />
-            <Route path="/folder/:id" element={<Folder />} />
-            <Route path="/file/:id" element={<FilePage />} />
+            <Route path="/courses" element={<Courses user={user} />} />
+            <Route path="/courses/course/:id" element={<Course user={user} />} />
+            <Route path="/courses/course/:courseId/folder/:folderId" element={<Folder user={user} />} />
+            <Route path="/courses/course/:courseId/file/:fileId" element={<FilePage user={user} />}/>
+
+
             <Route path="/contact" element={<ContactUs />} />
 
             {/* Auth Routes */}
@@ -133,9 +134,14 @@ function App() {
           </Routes>
         </main>
 
-        <footer className="bg-white border-t border-gray-200 mt-12 py-8">
-          <div className="container mx-auto px-4 text-center text-gray-500 text-sm">
-            <p>© {new Date().getFullYear()} Sikum4U - כל הסיכומים במקום אחד</p>
+        <footer className="bg-white border-t border-gray-200 mt-auto py-1">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-gray-600 font-medium mb-2">
+              © {new Date().getFullYear()} כל הזכויות שמורות ליאיר יהב
+            </p>
+            <p className="text-gray-400 text-sm italic font-serif">
+              "זה נכון כי זה נכון, ובגלל שזה נכון, זה נכון"
+            </p>
           </div>
         </footer>
       </div>

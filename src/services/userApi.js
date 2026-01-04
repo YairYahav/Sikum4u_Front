@@ -9,13 +9,18 @@ export const userAPI = {
 
     // קבלת מועדפים
     getFavorites: async () => {
-        try {
-            const response = await api.get('/users/me/favorites');
-            return response.data;
-        } catch (error) {
-            console.warn("Could not fetch favorites", error);
-            return { data: { courses: [], files: [] } };
-        }
+        const response = await api.get('/users/me/favorites');
+        return response.data; 
+    },
+
+    // עדכון מועדפים (הוספה או הסרה)
+    updateFavorites: async (resourceId, resourceType, action) => {
+        const response = await api.put('/users/me/favorites', {
+            resourceId,
+            resourceType,
+            action
+        });
+        return response.data;
     },
 
     // עדכון תמונת פרופיל

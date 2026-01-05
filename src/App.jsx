@@ -75,9 +75,9 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<Home user={user} />} />
             <Route path="/courses" element={<Courses user={user} />} />
-            <Route path="/courses/course/:id" element={<Course user={user} />} />
-            <Route path="/courses/course/:courseId/folder/:folderId" element={<Folder user={user} />} />
-            <Route path="/courses/course/:courseId/file/:fileId" element={<FilePage user={user} />}/>
+            <Route path="/courses/course/:courseId" element={<ProtectedRoute user={user}><Course user={user} /></ProtectedRoute>} />
+            <Route path="/courses/course/:courseId/folder/:folderId" element={<ProtectedRoute user={user}><Folder user={user} /></ProtectedRoute>} />
+            <Route path="/courses/course/:courseId/file/:fileId" element={<ProtectedRoute user={user}><FilePage user={user} /></ProtectedRoute>} />
 
 
             <Route path="/contact" element={<ContactUs />} />

@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { courseAPI } from '../services/courseApi';
 import CourseCard from '../components/Course/CourseCard';
 import { userAPI } from '../services/userApi';
 import { Loader2, AlertCircle, Search, BookOpen } from 'lucide-react';
+
+import AddCourseCard from '../components/AddCourse/AddCourseCard';
+import CreateCourseStatusModal from '../components/AddCourse/CourseForm';
+import CourseForm from '../components/AddCourse/CourseForm';
 
 const Courses = ({ user }) => {
   const [courses, setCourses] = useState([]); 
@@ -14,20 +18,18 @@ const Courses = ({ user }) => {
   const [error, setError] = useState(null);
   const [favorites, setFavorites] = useState([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
+
+  const isAdmin = user?.role === 'admin';
+  
+  const fetchData = useCallback(async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // 1. שליפת הקורסים - עם בדיקה מקיפה
-        //console.log("Frontend: Fetching courses...");
         const response = await courseAPI.getAllCourses();
-        //console.log("Frontend: Raw Response:", response);
-
         let extractedCourses = [];
 
-        // לוגיקה חכמה לחילוץ המערך (מטפל בכל סוגי העטיפות)
         if (Array.isArray(response)) {
             extractedCourses = response;
         } else if (response.data && Array.isArray(response.data)) {
@@ -38,8 +40,6 @@ const Courses = ({ user }) => {
             extractedCourses = response.data.courses;
         }
 
-        //console.log("Frontend: Extracted Courses:", extractedCourses);
-
         if (!Array.isArray(extractedCourses)) {
             throw new Error("המידע שהתקבל אינו תקין (לא מערך)");
         }
@@ -47,31 +47,29 @@ const Courses = ({ user }) => {
         setCourses(extractedCourses);
         setFilteredCourses(extractedCourses);
 
-        // 2. שליפת מועדפים
         if (user) {
           try {
             const favRes = await userAPI.getFavorites();
-            // הגנה מפני קריסה אם אין מועדפים
             const rawFavs = favRes.data?.courses || favRes.data || [];
             const favIds = Array.isArray(rawFavs) ? rawFavs.map(c => c._id || c) : [];
             setFavorites(favIds);
           } catch (err) {
-            console.warn("Failed to load favorites (minor error)", err);
+            console.warn("Failed to load favorites", err);
           }
         }
 
       } catch (err) {
-        console.error("CRITICAL ERROR loading courses:", err);
-        setError("לא הצלחנו לטעון את הקורסים. בדוק את הקונסול לפרטים.");
+        console.error("Error loading courses:", err);
+        setError("לא הצלחנו לטעון את הקורסים");
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchData();
   }, [user]);
 
-  // לוגיקת החיפוש
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   useEffect(() => {
     if (!searchTerm.trim()) {
       setFilteredCourses(courses);
@@ -95,6 +93,15 @@ const Courses = ({ user }) => {
       } catch (err) {
           setFavorites(prev => isFav ? [...prev, courseId] : prev.filter(id => id !== courseId));
       }
+  };
+
+  const handleCourseCreated = () => {
+      setIsAddCourseOpen(false);
+      fetchData();
+  };
+
+  const handleError = (msg) => {
+      alert(msg || "אירעה שגיאה ביצירת הקורס");
   };
 
   if (loading) return (
@@ -139,8 +146,10 @@ const Courses = ({ user }) => {
           </div>
       </div>
 
-      {filteredCourses.length > 0 ? (
+      {(filteredCourses.length > 0 || isAdmin) ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          
+          {/* 1. קודם כל מציגים את הקורסים */}
           {filteredCourses.map((course) => (
             <Link 
                 key={course._id} 
@@ -154,6 +163,12 @@ const Courses = ({ user }) => {
               />
             </Link>
           ))}
+
+          {/* 2. ורק בסוף מציגים את כפתור ההוספה (אם אדמין) */}
+          {isAdmin && (
+              <AddCourseCard onClick={() => setIsAddCourseOpen(true)} />
+          )}
+
         </div>
       ) : (
         <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
@@ -167,6 +182,16 @@ const Courses = ({ user }) => {
             </button>
         </div>
       )}
+
+      {isAddCourseOpen && (
+        <CourseForm 
+            show={isAddCourseOpen}
+            handleClose={() => setIsAddCourseOpen(false)}
+            onSuccess={handleCourseCreated}
+            onError={handleError}
+        />
+      )}
+
     </div>
   );
 };

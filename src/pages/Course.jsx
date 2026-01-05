@@ -27,6 +27,7 @@ const Course = ({ user }) => {
   const [isAddFileOpen, setIsAddFileOpen] = useState(false); 
   const [isUploading, setIsUploading] = useState(false);
 
+  
   const fetchCourseAndFavorites = async () => {
       try {
         setLoading(true);

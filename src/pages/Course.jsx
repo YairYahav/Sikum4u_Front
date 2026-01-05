@@ -87,7 +87,6 @@ const Course = ({ user }) => {
   const isAdmin = user?.role === 'admin';
 
   return (
-    // תיקון גובה: min-h מאפשר לדף לגדול בהתאם לתוכן ומונע התנגשות עם הפוטר
     <div className="container mx-auto px-4 py-6 min-h-[calc(100vh-80px)]"> 
       
       <Breadcrumbs items={[
@@ -95,7 +94,6 @@ const Course = ({ user }) => {
           { label: course.title }
       ]} />
 
-      {/* תיקון לייאוט: items-start מונע מתיחה לא רצויה של ה-sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         
         <div className="lg:col-span-1">
@@ -121,7 +119,8 @@ const Course = ({ user }) => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     
                     {course.children && course.children.length > 0 && (
-                        course.children.map((item) => {
+                        // התיקון: הוספנו index לפרמטרים
+                        course.children.map((item, index) => {
                             const isFolder = item.type === 'folder' || item.type === 'Folder';
                             
                             const itemLink = isFolder 
@@ -130,7 +129,8 @@ const Course = ({ user }) => {
 
                             return (
                                 <Link 
-                                  key={item._id} 
+                                  // התיקון: שימוש ב-ID או באינדקס כגיבוי
+                                  key={item._id || index} 
                                   to={itemLink}
                                   className="group flex items-center p-4 bg-white rounded-xl border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all"
                                 >

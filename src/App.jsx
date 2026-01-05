@@ -38,7 +38,7 @@ function App() {
           
           const validUser = res.data || res.user || res;
           
-          console.log("App.jsx - User Loaded:", validUser);
+          // console.log("App.jsx - User Loaded:", validUser);
           setUser(validUser); 
         } catch (err) {
           console.error("Session expired", err);
@@ -73,7 +73,7 @@ function App() {
         <main className="flex-grow container mx-auto px-4 py-8">
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Home user={user} />} />
             <Route path="/courses" element={<Courses user={user} />} />
             <Route path="/courses/course/:id" element={<Course user={user} />} />
             <Route path="/courses/course/:courseId/folder/:folderId" element={<Folder user={user} />} />

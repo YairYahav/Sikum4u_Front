@@ -41,4 +41,10 @@ api.interceptors.response.use(
     }
 );
 
+api.createLink = (data) => api.post('/important-links', data);
+api.updateLink = (id, data) => api.put(`/important-links/${id}`, data);
+api.deleteLink = (id) => api.delete(`/important-links/${id}`);
+api.updateLinksOrder = (links) => api.put('/important-links/reorder', { links });
+
+
 export default api;

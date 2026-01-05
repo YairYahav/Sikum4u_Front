@@ -1,98 +1,147 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { courseAPI } from '../services/courseApi';
-import { userAPI } from '../services/userApi'; 
 import CourseCard from '../components/Course/CourseCard';
-import CourseForm from '../components/AddCourse/CourseForm';
-import AddCourseCard from '../components/AddCourse/AddCourseCard';
+import { userAPI } from '../services/userApi';
+import { Loader2, AlertCircle, Search, BookOpen } from 'lucide-react';
 
 const Courses = ({ user }) => {
-  const [courses, setCourses] = useState([]);
-  const [favoriteCourseIds, setFavoriteCourseIds] = useState([]); 
+  const [courses, setCourses] = useState([]); 
+  const [filteredCourses, setFilteredCourses] = useState([]); 
+  const [searchTerm, setSearchTerm] = useState(''); 
+  
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [error, setError] = useState(null);
+  const [favorites, setFavorites] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // 1. קבלת קורסים
-        const coursesRes = await courseAPI.getAllCourses();
-        if (coursesRes && coursesRes.data) setCourses(coursesRes.data);
-        else setCourses([]);
+        setError(null);
+        
+        // 1. שליפת הקורסים - עם בדיקה מקיפה
+        //console.log("Frontend: Fetching courses...");
+        const response = await courseAPI.getAllCourses();
+        //console.log("Frontend: Raw Response:", response);
 
-        // 2. קבלת מועדפים (אם מחובר)
-        if (user) {
-            try {
-                const favRes = await userAPI.getFavorites();
-                // השרת החדש מחזיר מבנה: { data: { courses: [...], files: [...] } }
-                // אנחנו צריכים את המערך של הקורסים
-                const favCourses = favRes.data.courses || [];
-                // המרה ל-IDs בלבד כדי שיהיה קל לבדוק
-                const ids = favCourses.map(c => c._id || c);
-                setFavoriteCourseIds(ids);
-            } catch (err) {
-                console.error("Failed to load favorites", err);
-            }
+        let extractedCourses = [];
+
+        // לוגיקה חכמה לחילוץ המערך (מטפל בכל סוגי העטיפות)
+        if (Array.isArray(response)) {
+            extractedCourses = response;
+        } else if (response.data && Array.isArray(response.data)) {
+            extractedCourses = response.data; 
+        } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+            extractedCourses = response.data.data; 
+        } else if (response.data && Array.isArray(response.data.courses)) {
+            extractedCourses = response.data.courses;
         }
+
+        //console.log("Frontend: Extracted Courses:", extractedCourses);
+
+        if (!Array.isArray(extractedCourses)) {
+            throw new Error("המידע שהתקבל אינו תקין (לא מערך)");
+        }
+
+        setCourses(extractedCourses);
+        setFilteredCourses(extractedCourses);
+
+        // 2. שליפת מועדפים
+        if (user) {
+          try {
+            const favRes = await userAPI.getFavorites();
+            // הגנה מפני קריסה אם אין מועדפים
+            const rawFavs = favRes.data?.courses || favRes.data || [];
+            const favIds = Array.isArray(rawFavs) ? rawFavs.map(c => c._id || c) : [];
+            setFavorites(favIds);
+          } catch (err) {
+            console.warn("Failed to load favorites (minor error)", err);
+          }
+        }
+
       } catch (err) {
-        console.error("Error fetching data", err);
+        console.error("CRITICAL ERROR loading courses:", err);
+        setError("לא הצלחנו לטעון את הקורסים. בדוק את הקונסול לפרטים.");
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
   }, [user]);
 
+  // לוגיקת החיפוש
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredCourses(courses);
+    } else {
+      const lowerTerm = searchTerm.toLowerCase();
+      const filtered = courses.filter(course => 
+        (course.title || "").toLowerCase().includes(lowerTerm)
+      );
+      setFilteredCourses(filtered);
+    }
+  }, [searchTerm, courses]);
+
   const handleToggleFavorite = async (courseId) => {
+      if (!user) return alert("עליך להתחבר כדי להוסיף למועדפים");
+      
+      const isFav = favorites.includes(courseId);
+      setFavorites(prev => isFav ? prev.filter(id => id !== courseId) : [...prev, courseId]);
+
       try {
-          const isCurrentlyFavorite = favoriteCourseIds.includes(courseId);
-          const action = isCurrentlyFavorite ? 'remove' : 'add';
-
-          // 1. עדכון אופטימי במסך (מיידי)
-          if (action === 'remove') {
-              setFavoriteCourseIds(prev => prev.filter(id => id !== courseId));
-          } else {
-              setFavoriteCourseIds(prev => [...prev, courseId]);
-          }
-
-          // 2. שליחה לשרת עם הפורמט החדש
-          await userAPI.updateFavorites(courseId, 'Course', action);
-          
-      } catch (error) {
-          console.error("Error updating favorite", error);
+          await userAPI.updateFavorites(courseId, 'Course', isFav ? 'remove' : 'add');
+      } catch (err) {
+          setFavorites(prev => isFav ? [...prev, courseId] : prev.filter(id => id !== courseId));
       }
   };
 
-  const handleCourseAdded = (newCourse) => {
-    let courseToAdd = newCourse.data || newCourse;
-    setCourses(prev => [...prev, courseToAdd]);
-    setShowAddModal(false);
-  };
+  if (loading) return (
+    <div className="flex justify-center items-center h-[60vh]">
+      <Loader2 className="animate-spin text-indigo-600 h-12 w-12" />
+    </div>
+  );
+
+  if (error) return (
+    <div className="flex flex-col items-center justify-center h-[60vh] text-center text-gray-800">
+        <AlertCircle size={48} className="text-red-500 mb-4" />
+        <h2 className="text-xl font-bold">{error}</h2>
+        <button onClick={() => window.location.reload()} className="mt-4 text-indigo-600 underline">
+            נסה לרענן שוב
+        </button>
+    </div>
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-            <h2 className="text-3xl font-bold text-gray-800">כל הקורסים</h2>
+      
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <BookOpen className="text-indigo-600" />
+                כל הקורסים
+            </h1>
             <p className="text-gray-500 mt-1">מצא את הסיכומים שאתה צריך בקלות</p>
-        </div>
+          </div>
+
+          <div className="relative w-full md:w-96">
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+                type="text"
+                className="block w-full pr-10 pl-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none shadow-sm text-gray-800 placeholder-gray-400"
+                placeholder="חפש קורס..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
       </div>
 
-      <CourseForm 
-        show={showAddModal} 
-        handleClose={() => setShowAddModal(false)} 
-        onSuccess={handleCourseAdded}
-        onError={(msg) => alert(msg)}
-      />
-
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
-        </div>
-      ) : (
+      {filteredCourses.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {courses.map(course => (
+          {filteredCourses.map((course) => (
             <Link 
                 key={course._id} 
                 to={`/courses/course/${course._id}`} 
@@ -100,23 +149,22 @@ const Courses = ({ user }) => {
             >
               <CourseCard 
                 course={course}
-                isFavorite={favoriteCourseIds.includes(course._id)}
-                onToggleFavorite={user ? handleToggleFavorite : null}
+                isFavorite={favorites.includes(course._id)}
+                onToggleFavorite={handleToggleFavorite}
               />
             </Link>
           ))}
-
-          {user?.role === 'admin' && (
-            <div className="h-full">
-                <AddCourseCard onClick={() => setShowAddModal(true)} />
-            </div>
-          )}
-          
-          {courses.length === 0 && user?.role !== 'admin' && (
-             <div className="col-span-full text-center py-12 text-gray-400">
-                <p className="text-xl">לא נמצאו קורסים במערכת.</p>
-             </div>
-          )}
+        </div>
+      ) : (
+        <div className="text-center py-16 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+            <Search size={48} className="mx-auto text-gray-300 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900">לא נמצאו קורסים התואמים לחיפוש</h3>
+            <button 
+                onClick={() => setSearchTerm('')}
+                className="mt-4 text-indigo-600 hover:text-indigo-800 font-medium"
+            >
+                נקה חיפוש והצג הכל
+            </button>
         </div>
       )}
     </div>

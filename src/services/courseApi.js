@@ -9,8 +9,15 @@ export const courseAPI = {
 
     // קבלת הקורסים המומלצים עבור ה-Carousel בדף הבית
     getFeaturedCourses: async () => {
-        const response = await api.get('/courses/featured');
-        return response.data;
+        // מנסים לנתיב הייעודי (אם קיים), אחרת רגיל
+        try {
+            const response = await api.get('/courses/featured');
+            return response.data;
+        } catch (error) {
+            console.warn("Featured endpoint not found, fetching all");
+            const response = await api.get('/courses');
+            return response.data;
+        }
     },
 
     // קבלת מידע מלא על קורס ספציפי לפי ה-ID שלו
@@ -36,6 +43,18 @@ export const courseAPI = {
     // מחיקת קורס מהמערכת
     deleteCourse: async (id) => {
         const response = await api.delete(`/courses/${id}`);
+        return response.data;
+    },
+
+    // --- פונקציות עזר למומלצים (חובה עבור ה-FeaturedSection שיצרנו) ---
+    updateFeaturedOrder: async (courses) => {
+        // שולחים מערך של IDs או אובייקטים
+        const response = await api.put('/courses/featured/reorder', { courses });
+        return response.data;
+    },
+
+    toggleFeatured: async (id, isFeatured) => {
+        const response = await api.put(`/courses/${id}`, { isFeatured });
         return response.data;
     }
 };

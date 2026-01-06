@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { contactAPI } from '../services/contactApi';
 import { 
     Mail, Trash2, Reply, Search, Inbox, 
-    CheckCircle, Clock, AlertCircle, RefreshCw, X 
+    CheckCircle, Clock, AlertCircle, RefreshCw, X, AlertTriangle
 } from 'lucide-react';
 
 const AdminPanel = () => {
@@ -11,6 +11,8 @@ const AdminPanel = () => {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [filter, setFilter] = useState('all'); // 'all', 'new', 'read'
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [messageToDelete, setMessageToDelete] = useState(null);
 
     useEffect(() => {
         fetchMessages();
@@ -30,16 +32,25 @@ const AdminPanel = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("האם למחוק את ההודעה לצמיתות?")) {
-            try {
-                await contactAPI.deleteMessage(id);
-                setMessages(prev => prev.filter(msg => msg._id !== id));
-            } catch (err) {
-                alert("שגיאה במחיקת ההודעה");
-            }
+    const handleDeleteClick = (id) => {
+        setMessageToDelete(id);
+        setShowDeleteModal(true);
+    };
+    
+    const confirmDelete = async () => {
+        if (!messageToDelete) return;
+
+        try {
+            await contactAPI.deleteMessage(messageToDelete);
+            setMessages(prev => prev.filter(msg => msg._id !== messageToDelete));
+            setShowDeleteModal(false);
+            setMessageToDelete(null);
+        } catch (err) {
+            alert("שגיאה במחיקת ההודעה");
+            setShowDeleteModal(false);
         }
     };
+
 
     // --- הפונקציה המעודכנת לפתיחת Gmail ---
     const handleReply = (msg) => {
@@ -226,7 +237,7 @@ const AdminPanel = () => {
                                             השב ב-Gmail
                                         </button>
                                         <button 
-                                            onClick={() => handleDelete(msg._id)}
+                                            onClick={() => handleDeleteClick(msg._id)}
                                             className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 text-red-500 hover:bg-red-50 hover:border-red-200 rounded-xl transition-colors"
                                         >
                                             <Trash2 size={18} />
@@ -240,6 +251,47 @@ const AdminPanel = () => {
                 </div>
 
             </div>
+            {/* --- מודל אישור מחיקה --- */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 transform scale-100 transition-all border-2 border-red-100 relative">
+                        
+                        <button 
+                            onClick={() => setShowDeleteModal(false)}
+                            className="absolute top-4 left-4 text-gray-400 hover:text-gray-600"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <div className="flex flex-col items-center text-center mb-6">
+                            <div className="bg-red-100 p-3 rounded-full mb-4">
+                                <AlertTriangle size={32} className="text-red-600" />
+                            </div>
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">מחיקת הודעה</h3>
+                            <p className="text-gray-500 text-sm leading-relaxed">
+                                האם אתה בטוח שברצונך למחוק את ההודעה הזו?
+                                <br/>
+                                הפעולה היא בלתי הפיכה.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={() => setShowDeleteModal(false)}
+                                className="flex-1 py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors"
+                            >
+                                ביטול
+                            </button>
+                            <button 
+                                onClick={confirmDelete}
+                                className="flex-1 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl shadow-md shadow-red-200 transition-colors"
+                            >
+                                כן, מחק
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -68,7 +68,7 @@ const Home = ({ user }) => {
               <span className="text-indigo-200">במקום אחד.</span>
             </h1>
             <p className="text-lg text-indigo-100 max-w-lg mx-auto lg:mx-0">
-              הפלטפורמה המרכזית לניהול חומרי לימוד. גישה מהירה ונוחה לכל הקורסים והקבצים שלך.
+              כל הקורסים, הקבצים והסיכומים מסודרים בדיוק איך שאתה צריך
             </p>
             
             <div className="flex flex-row gap-4 justify-center lg:justify-start pt-2">
@@ -90,7 +90,7 @@ const Home = ({ user }) => {
                 </div>
                 <div>
                     <h3 className="font-bold text-lg">ארגון חכם</h3>
-                    <p className="text-indigo-100 text-sm">סידור היררכי נוח של כל התיקיות והקבצים.</p>
+                    <p className="text-indigo-100 text-sm">תיקיות מסודרות לכל קורס, בלי שתצטרך לחפש שעות</p>
                 </div>
             </div>
 
@@ -110,7 +110,7 @@ const Home = ({ user }) => {
                 </div>
                 <div>
                     <h3 className="font-bold text-lg">שיתוף ידע</h3>
-                    <p className="text-indigo-100 text-sm">קהילה שיתופית להעלאה והורדה של חומרים.</p>
+                    <p className="text-indigo-100 text-sm">אני מעלה סיכומים לטובת הכלל</p>
                 </div>
             </div>
           </div>

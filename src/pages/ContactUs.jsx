@@ -1,82 +1,83 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/authApi';
-import { contactAPI } from '../services/contactApi';
-import { Mail, User, Send, Lock, MessageSquare } from 'lucide-react';
+import { contactAPI } from '../services/contactApi'; 
+import { Mail, User, Send, Lock, MessageSquare, Phone, MapPin } from 'lucide-react'; // הוספתי אייקונים חסרים
 
-const ContactUs = () => {
+const ContactUs = ({ user }) => {
     const navigate = useNavigate();
-    const [user, setUser] = useState(null);
-    const [isAnonymous, setIsAnonymous] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [sending, setSending] = useState(false);
-    const [success, setSuccess] = useState(false);
+    
+    // ניהול מצבי טעינה והצלחה
+    const [loading, setLoading] = useState(true); // לטעינת המשתמש הראשונית
+    const [sending, setSending] = useState(false); // לשליחת הטופס
+    const [success, setSuccess] = useState(false); // להצגת מסך תודה
+    const [isAnonymous, setIsAnonymous] = useState(false); // למצב אנונימי
 
-    // טופס
+    // נתוני הטופס
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        message: ''
+        subject: '',
+        message: '' // חייב להיות message כמו ב-Schema בשרת
     });
 
-    // בדיקת התחברות בטעינת הדף
+    // בדיקת התחברות ועדכון הטופס בטעינה
     useEffect(() => {
-        const checkUser = async () => {
+        const initUser = async () => {
             try {
-                const token = localStorage.getItem('token');
-                if (token) {
-                    const res = await authAPI.getMe();
-                    console.log("ContactUs Debug - Server Response:", res); // שורה לבדיקה
-
-                    // --- התיקון הגדול ---
-                    // בדיקה איפה מסתתר המידע של המשתמש
-                    let userData = null;
-
-                    if (res.firstName) {
-                        // אפשרות 1: המידע נמצא ישירות בשורש
-                        userData = res;
-                    } else if (res.data && res.data.firstName) {
-                        // אפשרות 2: המידע עטוף ב-data
-                        userData = res.data;
-                    } else if (res.user && res.user.firstName) {
-                        // אפשרות 3: המידע עטוף ב-user
-                        userData = res.user;
-                    } else if (res.data && res.data.user) {
-                         // אפשרות 4: עטיפה כפולה data.user
-                        userData = res.data.user;
-                    }
-
-                    // אם מצאנו משתמש תקין, נעדכן את הסטייט
-                    if (userData) {
-                        setUser(userData);
-                        
-                        // מילוי השדות באופן אוטומטי
-                        setFormData(prev => ({
-                            ...prev,
-                            name: `${userData.firstName} ${userData.lastName}`,
-                            email: userData.email
-                        }));
+                // אם המשתמש כבר הועבר כ-prop (כמו ב-App.jsx שלך), נשתמש בו
+                if (user) {
+                    setFormData(prev => ({
+                        ...prev,
+                        name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+                        email: user.email || ''
+                    }));
+                } else {
+                    // ניסיון שליפה ידני (למקרה שה-prop לא עבר או בריענון)
+                    const token = localStorage.getItem('token');
+                    if (token) {
+                        try {
+                            const res = await authAPI.getMe();
+                            const userData = res.data?.user || res.data || res.user || res;
+                            
+                            if (userData && userData.email) {
+                                setFormData(prev => ({
+                                    ...prev,
+                                    name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+                                    email: userData.email || ''
+                                }));
+                            }
+                        } catch (err) {
+                            console.log("Silent auth check failed:", err);
+                        }
                     }
                 }
-            } catch (err) {
-                console.log("User check failed:", err);
             } finally {
                 setLoading(false);
             }
         };
-        checkUser();
-    }, []);
+
+        initUser();
+    }, [user]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // ולידציה בסיסית
+        if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+            alert("נא למלא את כל השדות");
+            return;
+        }
+
         setSending(true);
         try {
             await contactAPI.sendMessage(formData);
             setSuccess(true);
         } catch (error) {
             console.error("Failed to send message", error);
-            // הצגת הצלחה גם אם אין שרת contact פעיל כרגע
-            setSuccess(true);
+            // אם השרת מחזיר שגיאה, נציג אותה למשתמש
+            const msg = error.response?.data?.error || "אירעה שגיאה בשליחת ההודעה";
+            alert(msg);
         } finally {
             setSending(false);
         }
@@ -84,7 +85,7 @@ const ContactUs = () => {
 
     if (loading) return <div className="min-h-screen flex items-center justify-center">טוען...</div>;
 
-    // תצוגת הצלחה
+    // --- תצוגת הצלחה ---
     if (success) {
         return (
             <div className="min-h-[80vh] flex flex-col items-center justify-center text-center p-4">
@@ -100,7 +101,7 @@ const ContactUs = () => {
         );
     }
 
-    // מצב 1: משתמש לא מחובר וגם לא בחר אנונימי -> הצגת "Auth Wall"
+    // --- מצב 1: משתמש לא מחובר וגם לא בחר אנונימי (Auth Wall) ---
     if (!user && !isAnonymous) {
         return (
             <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
@@ -137,7 +138,7 @@ const ContactUs = () => {
         );
     }
 
-    // מצב 2: משתמש מחובר או בחר אנונימי -> הצגת הטופס
+    // --- מצב 2: טופס השליחה (מחובר או אנונימי) ---
     return (
         <div className="max-w-4xl mx-auto py-12 px-4">
             <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden flex flex-col md:flex-row">
@@ -162,6 +163,14 @@ const ContactUs = () => {
                             <span>yairyahav5@gmail.com</span>
                         </div>
                         <div className="flex items-center gap-3 text-indigo-100">
+                            <Phone size={20} />
+                            <span>054-7000903</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-indigo-100">
+                            <MapPin size={20} />
+                            <span>ישראל</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-indigo-100">
                             <MessageSquare size={20} />
                             <span>מענה בהקדם האפשרי</span>
                         </div>
@@ -171,7 +180,6 @@ const ContactUs = () => {
                 {/* צד שמאל - הטופס */}
                 <div className="md:w-2/3 p-8 md:p-12">
                     <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                        {/* שימוש ב-optional chaining (?.) למניעת שגיאות */}
                         {user?.firstName ? `היי ${user.firstName}, איך אפשר לעזור?` : 'שלח לנו הודעה'}
                     </h3>
 
@@ -211,6 +219,18 @@ const ContactUs = () => {
                         </div>
 
                         <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">נושא הפנייה</label>
+                            <input 
+                                type="text" 
+                                value={formData.subject}
+                                onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                                placeholder="בנוגע לקורס..."
+                                required
+                            />
+                        </div>
+
+                        <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">תוכן ההודעה</label>
                             <textarea 
                                 value={formData.message}
@@ -222,7 +242,8 @@ const ContactUs = () => {
                         </div>
 
                         <div className="flex items-center justify-between pt-2">
-                            {!user && (
+                            {/* כפתור חזרה למצב אנונימי (אם לא מחובר) */}
+                            {!user && isAnonymous && (
                                 <button 
                                     type="button" 
                                     onClick={() => setIsAnonymous(false)}
@@ -235,7 +256,7 @@ const ContactUs = () => {
                             <button 
                                 type="submit" 
                                 disabled={sending}
-                                className={`flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all ${!user ? 'mr-auto' : 'w-full justify-center'}`}
+                                className={`flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all ${(!user && isAnonymous) ? 'mr-auto' : 'w-full justify-center'}`}
                             >
                                 {sending ? 'שולח...' : (
                                     <>

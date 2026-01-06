@@ -125,10 +125,10 @@ const User = () => {
                                         <span>קורסים במועדפים:</span>
                                         <span className="font-bold">{favorites.courses?.length || 0}</span>
                                     </li>
-                                    <li className="flex justify-between">
+                                    {/* <li className="flex justify-between">
                                         <span>קבצים במועדפים:</span>
                                         <span className="font-bold">{favorites.files?.length || 0}</span>
-                                    </li>
+                                    </li> */}
                                 </ul>
                             </div>
                         </div>

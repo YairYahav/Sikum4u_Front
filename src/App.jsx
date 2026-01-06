@@ -14,6 +14,7 @@ import ContactUs from './pages/ContactUs';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import NotFound from './pages/NotFound';
+import CourseComments from './pages/CourseComments';
 
 // Admin Pages
 import AdminPanel from './pages/AdminPanel';
@@ -23,7 +24,7 @@ import AddFile from './pages/admin/AddFile';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
-import Header from './components/Header/Header'; // וודא שזה הנתיב הנכון לקובץ Header שיצרת
+import Header from './components/Header/Header'; 
 
 function App() {
   const [user, setUser] = useState(null);
@@ -78,9 +79,10 @@ function App() {
             <Route path="/courses/course/:courseId" element={<ProtectedRoute user={user}><Course user={user} /></ProtectedRoute>} />
             <Route path="/courses/course/:courseId/folder/:folderId" element={<ProtectedRoute user={user}><Folder user={user} /></ProtectedRoute>} />
             <Route path="/courses/course/:courseId/file/:fileId" element={<ProtectedRoute user={user}><FilePage user={user} /></ProtectedRoute>} />
+            <Route path="/courses/course/:courseId/comments" element={<ProtectedRoute user={user}><CourseComments user={user} /></ProtectedRoute>} />
 
 
-            <Route path="/contact" element={<ContactUs />} />
+            <Route path="/contact" element={<ContactUs user={user} />} />
 
             {/* Auth Routes */}
             <Route path="/login" element={

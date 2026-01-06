@@ -1,10 +1,15 @@
 import api from './api';
 
 export const contactAPI = {
-    sendMessage: async (messageData) => {
-        // הנחת עבודה: יש endpoint בשרת שמקבל הודעות
-        // אם אין, זה יחזיר שגיאה, אבל ה-Frontend יהיה מוכן
-        const response = await api.post('/contact', messageData);
-        return response.data;
-    }
+    // שליחת הודעה (פומבי)
+    sendMessage: (data) => api.post('/contact', data),
+    
+    // קבלת כל ההודעות (אדמין)
+    getAllMessages: () => api.get('/contact'),
+    
+    // מחיקת הודעה (אדמין)
+    deleteMessage: (id) => api.delete(`/contact/${id}`),
+    
+    // עדכון סטטוס (אדמין) - אופציונלי
+    markAsRead: (id) => api.put(`/contact/${id}`, { status: 'read' })
 };

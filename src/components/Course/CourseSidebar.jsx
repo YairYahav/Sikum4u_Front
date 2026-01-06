@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // הוספנו את זה כדי לעבור עמוד אחרי מחיקה
+import { useNavigate } from 'react-router-dom'; 
 import { courseAPI } from '../../services/courseApi';
-// הוספנו את Trash2 (הפח) ואת AlertTriangle (אייקון אזהרה)
-import { Edit2, Save, X, Bold, Underline, Check, Heart, Trash2, AlertTriangle } from 'lucide-react';
+import { Edit2, Save, X, Bold, Underline, Check, Heart, Trash2, AlertTriangle, MessageCircle, ArrowRight} from 'lucide-react';
+import CourseRating from './CourseRating';
+
 
 const CourseSidebar = ({ course, isAdmin, onUpdate, isFavorite, onToggleFavorite, user }) => {
     const navigate = useNavigate(); // Hook למעבר עמודים
@@ -10,11 +11,13 @@ const CourseSidebar = ({ course, isAdmin, onUpdate, isFavorite, onToggleFavorite
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [isEditingDesc, setIsEditingDesc] = useState(false);
     const [isEditingInfo, setIsEditingInfo] = useState(false);
-    const [showDeleteModal, setShowDeleteModal] = useState(false); // State לחלונית המחיקה
+    const [showDeleteModal, setShowDeleteModal] = useState(false); 
 
     const [title, setTitle] = useState(course.title || '');
     const [description, setDescription] = useState(course.description || '');
     const [infoText, setInfoText] = useState(course.infoText || '');
+    const [currentAvgRating, setCurrentAvgRating] = useState(course.averageRating || 0);
+
     
     const editorRef = useRef(null);
 
@@ -22,6 +25,7 @@ const CourseSidebar = ({ course, isAdmin, onUpdate, isFavorite, onToggleFavorite
         setTitle(course.title);
         setDescription(course.description);
         setInfoText(course.infoText || '');
+        setCurrentAvgRating(course.averageRating || 0);
     }, [course]);
 
     useEffect(() => {
@@ -65,6 +69,13 @@ const CourseSidebar = ({ course, isAdmin, onUpdate, isFavorite, onToggleFavorite
         editorRef.current.focus();
     };
 
+    const handleRatingUpdate = () => {
+        if (onUpdate) {
+            window.location.reload(); 
+        }
+    };
+
+
     return (
         <>
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 h-full flex flex-col overflow-hidden relative">
@@ -101,6 +112,7 @@ const CourseSidebar = ({ course, isAdmin, onUpdate, isFavorite, onToggleFavorite
                                             }`} 
                                         />
                                     </button>
+                                    
                                 )}
                                 
                                 <h2 className="text-2xl font-bold text-gray-900 break-words flex-1">
@@ -146,6 +158,26 @@ const CourseSidebar = ({ course, isAdmin, onUpdate, isFavorite, onToggleFavorite
                             {description || "אין תיאור קצר..."}
                         </p>
                     )}
+                </div>
+
+                <CourseRating 
+                    courseId={course._id}
+                    initialAverage={currentAvgRating}
+                    onRatingUpdate={handleRatingUpdate}
+                    user={user}
+                />
+
+                <div className="mb-6">
+                    <button 
+                        onClick={() => navigate(`/courses/course/${course._id}/comments`)}
+                        className="w-full flex items-center justify-between p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-indigo-300 transition-all group shadow-sm"
+                    >
+                        <div className="flex items-center gap-2 text-gray-700 group-hover:text-indigo-700">
+                            <MessageCircle size={20} className="text-indigo-500" />
+                            <span className="font-medium text-sm">תגובות ודיונים</span>
+                        </div>
+                        <ArrowRight size={16} className="text-gray-400 group-hover:text-indigo-500 transform group-hover:-translate-x-1 transition-transform" />
+                    </button>
                 </div>
 
                 {/* --- מידע נוסף (גמיש) --- */}

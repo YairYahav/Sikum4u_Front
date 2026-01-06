@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { courseAPI } from '../services/courseApi'; 
 import { userAPI } from '../services/userApi'; 
-import { fileAPI } from '../services/fileApi'; // הוספנו את זה
+import { fileAPI } from '../services/fileApi'; 
 import { folderAPI } from '../services/folderApi'; // הוספנו ליתר ביטחון (למרות שכרגע משתמשים ב-Card)
 import { Folder, FileText, AlertCircle } from 'lucide-react';
 
@@ -10,8 +10,8 @@ import Breadcrumbs from '../components/Common/Breadcrumbs';
 import CourseSidebar from '../components/Course/CourseSidebar';
 import AddFolderCard from '../components/AddFolder/AddFolderCard';
 import FolderForm from '../components/AddFolder/FolderForm'; 
-import AddFileButton from '../components/AddFile/AddFileButton'; // הוספנו
-import AddFileModal from '../components/AddFile/AddFileModal';   // הוספנו
+import AddFileButton from '../components/AddFile/AddFileButton'; 
+import AddFileModal from '../components/AddFile/AddFileModal';
 
 const Course = ({ user }) => {
   const { courseId } = useParams(); 
